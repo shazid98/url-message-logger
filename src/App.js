@@ -1,25 +1,60 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
-function App() {
+const App = () => {
+  const [curlMessage, setCurlMessage] = useState("");
+  const [messages, setMessages] = useState([]);
+
+  useEffect(() => {
+    fetchMessages();
+  }, []);
+
+  const fetchMessages = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/get_messages");
+      setMessages(response.data);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+    }
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (curlMessage.trim()) {
+      try {
+        await axios.post("http://localhost:5000/", { curl_message: curlMessage }, {
+          headers: { "Content-Type": "application/json" }
+        });
+        setCurlMessage("");
+        fetchMessages(); // Refresh the messages after submitting
+      } catch (error) {
+        console.error("Error submitting message:", error);
+      }
+    }
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <h1>cURL Message Logger</h1>
+      <form onSubmit={handleSubmit}>
+        <textarea
+          value={curlMessage}
+          onChange={(e) => setCurlMessage(e.target.value)}
+          placeholder="Enter your cURL message here"
+        />
+        <br />
+        <button type="submit">Submit</button>
+      </form>
+      <h2>Stored Messages</h2>
+      <ul>
+        {messages.map((message) => (
+          <li key={message.timestamp}>
+            {message.timestamp} - {message.curl_message}
+          </li>
+        ))}
+      </ul>
     </div>
   );
-}
+};
 
 export default App;
